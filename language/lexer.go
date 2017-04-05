@@ -38,7 +38,7 @@ type Body []byte
 func readToken(body Body, position int) (Token, error) {
 	bytepos, runepos := skipIgnored(body, position)
 	code, n := runeAt(body, bytepos)
-	if code == EOF_ERR {
+	if code == RUNE_EOF {
 		return Token{EOF, bytepos, bytepos, ""}, nil
 	}
 
@@ -98,40 +98,40 @@ func readToken(body Body, position int) (Token, error) {
 }
 
 const (
-	EOF_ERR = utf8.RuneError
-	COMMENT = 35
-	BOM     = 0xFEFF
-	TAB     = 0x0009
-	SPACE   = 0x0020
-	NEWLINE = 0x000A
-	CR      = 0x000D
-	COMMA   = 0x002C
+	RUNE_EOF     = utf8.RuneError
+	RUNE_COMMENT = 35
+	RUNE_BOM     = 0xFEFF
+	RUNE_TAB     = 0x0009
+	RUNE_SPACE   = 0x0020
+	RUNE_NEWLINE = 0x000A
+	RUNE_CR      = 0x000D
+	RUNE_COMMA   = 0x002C
 )
 
 var ignoredRunes = map[rune]struct{}{
-	BOM:     {},
-	TAB:     {},
-	SPACE:   {},
-	NEWLINE: {},
-	CR:      {},
-	COMMA:   {},
+	RUNE_BOM:     {},
+	RUNE_TAB:     {},
+	RUNE_SPACE:   {},
+	RUNE_NEWLINE: {},
+	RUNE_CR:      {},
+	RUNE_COMMA:   {},
 }
 
 func skipIgnored(body Body, start int) (bytepos, runepos int) {
 	bytepos = start
 	runepos = start
-	for code, n := runeAt(body, bytepos); code != EOF_ERR; {
+	for code, n := runeAt(body, bytepos); code != RUNE_EOF; {
 		if _, ok := ignoredRunes[code]; ok {
 			bytepos += n
 			runepos++
 			continue
 		}
 
-		if code == COMMENT {
+		if code == RUNE_COMMENT {
 			bytepos += n
 			runepos++
 			// Ignore comment
-			for code, n := runeAt(body, bytepos); code != EOF_ERR && isCommented(code); {
+			for code, n := runeAt(body, bytepos); code != RUNE_EOF && isCommented(code); {
 				bytepos += n
 				runepos++
 			}
@@ -153,18 +153,18 @@ func readString(body Body, pos int) (Token, error) {
 
 func runeAt(body Body, pos int) (rune, int) {
 	if len(body) <= pos {
-		return EOF_ERR, 0
+		return RUNE_EOF, 0
 	}
 	return utf8.DecodeRune(body[pos:])
 }
 
 
 func isSource(r rune) bool {
-	return r < SPACE && r != TAB && r != NEWLINE && r != CR
+	return r < RUNE_SPACE && r != RUNE_TAB && r != RUNE_NEWLINE && r != RUNE_CR
 }
 
 func isCommented(r rune) bool {
-	return r != 0 && r != NEWLINE && r != CR && (r >= SPACE || r == TAB)
+	return r != 0 && r != RUNE_NEWLINE && r != RUNE_CR && (r >= RUNE_SPACE || r == RUNE_TAB)
 }
 
 func isSpread(body Body, pos int) bool {
